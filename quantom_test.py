@@ -1,5 +1,6 @@
 from qiskit import *
 from qiskit.tools.visualization import plot_histogram
+from qiskit.tools.monitor import job_monitor
 import matplotlib.pyplot as plt
 import numpy as np
 import pylatexenc
@@ -28,10 +29,22 @@ def quantomsimulator():
     return simulator
 
 
+def quantomcomputer(cir):
+    IBMQ.load_account()
+    provider = IBMQ.get_provider('ibm-q')
+    qcomp = provider.get_backend('ibmq_16_melbourne')
+    job = execute(cir, backend=qcomp)
+    print(job_monitor(job))
+    result = job.result()
+    plot_histogram(result.get_counts(cir))
+
+
 if __name__ == '__main__':
     # qiskitversion()
     cir = quantomcircuit()
     result = execute(cir, backend=quantomsimulator()).result()
     plot_histogram(result.get_counts(cir))
+    quantomcomputer(cir)
+
     plt.show()
 
