@@ -39,7 +39,9 @@ def quantomcomputer(circ, number_qubits, shots):
     print("least busy backend ", backend)
 
     # simple way to get a specific backend
-    # backend = provider.get_backend('ibmq_16_melbourne')
+    backend = provider.get_backend('ibmq_16_melbourne')
+
+    print("Will execute circuit on backend: ", backend)
 
     # Executes the job on the selected backedn
     job = execute(circ, backend=backend, shots=shots, optimization_level=3)
@@ -154,7 +156,7 @@ if __name__ == '__main__':
     quantomsimulator(cir, shots_simulator)
 
     # --Execute on the quantom computer--
-    #quantomcomputer(cir, number_of_qubits, shots_ibmq)
+    quantomcomputer(cir, number_of_qubits, shots_ibmq)
 
     plt.show()
 
