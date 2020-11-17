@@ -55,7 +55,7 @@ def get_quantumcomputer_quantum_instance(shots=100, number_qubits=None, use_ibmq
     if use_ibmq:
         IBMQ.load_account()
         provider = IBMQ.get_provider('ibm-q')
-        if specific_ibmq_backend == 'none':
+        if specific_ibmq_backend is None:
             if 0 < number_qubits < 5:
                 # Selects the lest busy backend which has enough number_of_qubits and is not a simulator and is operational
                 backend = least_busy(provider.backends(filters=lambda x: x.configuration().n_qubits >= (number_qubits + 1) and not x.configuration().simulator and x.status().operational == True))
@@ -65,7 +65,7 @@ def get_quantumcomputer_quantum_instance(shots=100, number_qubits=None, use_ibmq
                 return quantum_instance
 
             else:
-                if 5 <= number_qubits < 32:
+                if (5 <= number_qubits < 32) or (number_qubits is None):
                     # selects the IBMQ simulator
                     backend = provider.get_backend('ibmq_qasm_simulator')
                     print("The following Backend has be selected: ", str(backend))
@@ -80,7 +80,7 @@ def get_quantumcomputer_quantum_instance(shots=100, number_qubits=None, use_ibmq
                 backend = provider.get_backend(specific_ibmq_backend)
             except Exception as e:
                 print("Stacktrace: " + str(e))
-                print("The backend could not be selected. Please check again the backend name you have given: " + specific_ibmq_backend)
+                print("The backend could not be selected. Please check again the backend name you have given: " + str(specific_ibmq_backend))
             print("The following Backend has be selected: ", str(backend))
             quantum_instance = QuantumInstance(backend, shots, skip_qobj_validation=False)
             return quantum_instance
@@ -228,7 +228,7 @@ def dinner_party_using_grover():
     # Execute the dinner_calculator
     # Max 4 qubits can be used on a Quantum Computer right now (+1 scratch qubit, so in total 5)
     trys = 1024
-    qubits = 11
+    qubits = None
     ibmq = True
     required_backend = None
 
@@ -242,8 +242,8 @@ def dinner_party_using_grover():
 
     dinner_result = dinner_calculator.run(quantum_instance)
 
-    if quantum_instance.backend_name == "qasm_simulator":
-        print("As a local simulator was selected, no job monitor will be shown.")
+    if quantum_instance.is_simulator:
+        print("As a simulator was selected, no job monitor will be shown.")
     else:
         print("Running on IBMQ")
         print(job_monitor(dinner_result))
