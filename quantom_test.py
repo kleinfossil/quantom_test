@@ -1,4 +1,5 @@
 from qiskit import *
+from qiskit.aqua import QuantumInstance
 from qiskit.tools.visualization import plot_histogram
 from qiskit.tools.monitor import job_monitor
 import matplotlib.pyplot as plt
@@ -51,21 +52,30 @@ def quantomcomputer(circ, number_qubits, shots):
     plot_histogram(result.get_counts(circ))
 
 
-def get_quantomcomputer_backend():
-    IBMQ.load_account()
-    provider = IBMQ.get_provider('ibm-q')
+def get_quantomcomputer_quantum_instance(shots, number_qubits):
+    if number_qubits < 5:
+        IBMQ.load_account()
+        provider = IBMQ.get_provider('ibm-q')
 
-    # Selects the lest busy backend which has enough number_of_qubits and is not a simulator and is operational
-    # backend = least_busy(provider.backends(filters=lambda x: x.configuration().n_qubits >= (number_qubits + 1) and not x.configuration().simulator and x.status().operational == True))
-    # print("least busy backend ", backend)
+        # Selects the lest busy backend which has enough number_of_qubits and is not a simulator and is operational
+        backend = least_busy(provider.backends(filters=lambda x: x.configuration().n_qubits >= (number_qubits + 1) and not x.configuration().simulator and x.status().operational == True))
+        print("least busy backend ", backend)
 
-    # simple way to get a specific backend
-    backend = provider.get_backend('ibmq_16_melbourne')
+        # simple way to get a specific backend
+        # backend = provider.get_backend('ibmq_16_melbourne')
+        print("The following Backend has be selected: ", backend)
 
-    print("The following Backend has be selected: ", backend)
+        quantum_instance = QuantumInstance(backend, shots, skip_qobj_validation=False)
 
-    return backend
+        return quantum_instance
+    else:
+        raise Exception('Sorry your number of qubits reached. The max number is 4. Your requested: ' + str(number_qubits))
 
+def get_quantomcomputer_quantum_instance(shots):
+    # choose the simulator backend
+    simulator = Aer.get_backend('qasm_simulator')
+    print("The following simulator was selected: " + str(simulator))
+    return simulator
 
 def quantomcircuit():
     qr = QuantumRegister(2)
@@ -158,14 +168,14 @@ def grover_prep(qubit_number):
 
 
 def dinner_party_using_grover():
-    from qiskit.aqua.algorithms import Grover
-    from qiskit.aqua.components.oracles import LogicalExpressionOracle
-    from qiskit.tools.visualization import plot_histogram
+    # This algorithm will solve the dinner party problem, where you want to invite friends to a dinner party, but
+    # not all fit to each other. This results in a logical expression (D can with meet with A or C can meet with B
+    # but A and B do not want to meet.
+    # The algorithm will use Grover's algorithm to solve this problem.
+    # NOTICE: to execute even a small number of elements, the algorithm will need at least 11 qubits
+    # which most IBMQ backends don't provide.
 
-    # & = and; | = or; ~ = not; ^ = xor
-    # in the later plot results are organized alphabetically
-    # starting with the least significant bit (...1 = A; ..1. = B; .1.. = C; 1... = D; and so on)
-    # Example: 0110 shows the probability B and C would be a possible combination
+    # Here an overview of an example:
     # Example Table for a simple expression: log_expr = '((D & A) | (C & B)) & ~(A & B)'
     # D | C | B | A | Result
     # - - - - - - - - - - - -
@@ -186,16 +196,32 @@ def dinner_party_using_grover():
     # 0 | 1 | 1 | 1 | 0
     # 1 | 1 | 1 | 1 | 0
 
+    # In the later plot results are organized alphabetically
+    # starting with the least significant bit (...1 = A; ..1. = B; .1.. = C; 1... = D; and so on)
+    # Example: 0110 shows the probability B and C would be a possible combination
+
+    from qiskit.aqua.algorithms import Grover
+    from qiskit.aqua.components.oracles import LogicalExpressionOracle
+    from qiskit.tools.visualization import plot_histogram
+
+    # Logical Expressions which can be used for the LogicalExpressionOracle: & = and; | = or; ~ = not; ^ = xor
     log_expr = '((D & A) | (C & B)) & ~(A & B)'
 
     dinner_calculator = Grover(LogicalExpressionOracle(log_expr))
 
     # Execute on Simulator
-    dinner_result = dinner_calculator.run(Aer.get_backend('qasm_simulator'))
+    # dinner_result = dinner_calculator.run(Aer.get_backend('qasm_simulator'))
     # Execute on Quantom Computer
-    dinner_result = dinner_calculator.run(get_quantomcomputer_backend())
-    print(job_monitor(dinner_result))
-
+    # Max 4 qubits can be used right now (+1 scratch qubit, so in total 5)
+    qubits_needed = 11
+    trys = 100
+    quantum_instance = get_quantomcomputer_quantum_instance(trys)
+    dinner_result = dinner_calculator.run(quantum_instance)
+    if str(quantum_instance) == 'qasm_simulator':
+        print("As simulator was selected, no job monitor will be shown.")
+    else:
+        print("Running on IBMQ")
+        print(job_monitor(dinner_result))
     # Plot the final Histrogram
     plot_histogram(dinner_result['measurement'], title="Possible Party Combinations")
 
