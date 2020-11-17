@@ -16,9 +16,6 @@ def qiskitversion():
     print('Current qiskit Version: ', qiskit.__qiskit_version__)
     print('Current IBM Account: ', IBMQ.load_account())
 
-# The Quantom Circuit. Make your changes here.
-
-
 # Executes the QASM Simulator
 def quantomsimulator(cir, shots):
     # choose the simulator backend
@@ -52,8 +49,9 @@ def quantomcomputer(circ, number_qubits, shots):
     plot_histogram(result.get_counts(circ))
 
 
-def get_quantomcomputer_quantum_instance(shots, number_qubits):
-    if number_qubits < 5:
+# Selects a IBMQ quantum instance if number of qubits is lower than 5
+def get_quantomcomputer_quantum_instance(shots=100, number_qubits=0, use_quantum_computer=False):
+    if 0 < number_qubits < 5 and use_quantum_computer:
         IBMQ.load_account()
         provider = IBMQ.get_provider('ibm-q')
 
@@ -69,13 +67,15 @@ def get_quantomcomputer_quantum_instance(shots, number_qubits):
 
         return quantum_instance
     else:
-        raise Exception('Sorry your number of qubits reached. The max number is 4. Your requested: ' + str(number_qubits))
+        if use_quantum_computer:
+            raise Exception('Sorry your number of qubits reached. The max number is 4. Your requested: ' + str(number_qubits))
+        else:
+            # choose the simulator backend
+            simulator = Aer.get_backend('qasm_simulator')
+            simulator_instance = QuantumInstance(simulator)
+            print("The following simulator was selected: " + str(simulator_instance.backend_name))
+            return simulator_instance
 
-def get_quantomcomputer_quantum_instance(shots):
-    # choose the simulator backend
-    simulator = Aer.get_backend('qasm_simulator')
-    print("The following simulator was selected: " + str(simulator))
-    return simulator
 
 def quantomcircuit():
     qr = QuantumRegister(2)
@@ -213,15 +213,19 @@ def dinner_party_using_grover():
     # dinner_result = dinner_calculator.run(Aer.get_backend('qasm_simulator'))
     # Execute on Quantom Computer
     # Max 4 qubits can be used right now (+1 scratch qubit, so in total 5)
-    qubits_needed = 11
     trys = 100
+
+    # Executes on Simulator if no qubit number is provided
     quantum_instance = get_quantomcomputer_quantum_instance(trys)
+
     dinner_result = dinner_calculator.run(quantum_instance)
-    if str(quantum_instance) == 'qasm_simulator':
+
+    if quantum_instance.is_simulator:
         print("As simulator was selected, no job monitor will be shown.")
     else:
         print("Running on IBMQ")
         print(job_monitor(dinner_result))
+
     # Plot the final Histrogram
     plot_histogram(dinner_result['measurement'], title="Possible Party Combinations")
 
