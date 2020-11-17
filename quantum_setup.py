@@ -36,24 +36,30 @@ def get_quantumcomputer_quantum_instance(shots=100, number_qubits=None, use_ibmq
         IBMQ.load_account()
         provider = IBMQ.get_provider('ibm-q')
         if specific_ibmq_backend is None:
-            if 0 < number_qubits < 5:
-                # Selects the lest busy backend which has enough number_of_qubits and is not a simulator and is operational
-                backend = least_busy(provider.backends(filters=lambda x: x.configuration().n_qubits >= (number_qubits + 1) and not x.configuration().simulator and x.status().operational == True))
-                print("The least busy backend ", str(backend))
-                print("The following Backend has be selected: ", backend)
-                quantum_instance = QuantumInstance(backend, shots, skip_qobj_validation=False)
-                return quantum_instance
-
-            else:
-                if (5 <= number_qubits < 32) or (number_qubits is None):
-                    # selects the IBMQ simulator
-                    backend = provider.get_backend('ibmq_qasm_simulator')
-                    print("The following Backend has be selected: ", str(backend))
+            if number_qubits is not None:
+                if 0 < number_qubits < 5:
+                    # Selects the lest busy backend which has enough number_of_qubits and is not a simulator and is operational
+                    backend = least_busy(provider.backends(filters=lambda x: x.configuration().n_qubits >= (number_qubits + 1) and not x.configuration().simulator and x.status().operational == True))
+                    print("The least busy backend ", str(backend))
+                    print("The following Backend has be selected: ", backend)
                     quantum_instance = QuantumInstance(backend, shots, skip_qobj_validation=False)
                     return quantum_instance
                 else:
-                    raise Exception('Sorry your number of qubits reached. The max number for IBMQ is 31. Your requested: ' + str(number_qubits))
-
+                    if 5 <= number_qubits < 32:
+                        # selects the IBMQ simulator
+                        backend = provider.get_backend('ibmq_qasm_simulator')
+                        print("The following Backend has be selected: ", str(backend))
+                        quantum_instance = QuantumInstance(backend, shots, skip_qobj_validation=False)
+                        return quantum_instance
+                    else:
+                        raise Exception(
+                            'Sorry your number of qubits reached. The max number for IBMQ is 31. Your requested: ' + str(number_qubits))
+            else:
+                # selects the IBMQ simulator
+                backend = provider.get_backend('ibmq_qasm_simulator')
+                print("The following Backend has be selected: ", str(backend))
+                quantum_instance = QuantumInstance(backend, shots, skip_qobj_validation=False)
+                return quantum_instance
         else:
             # Selects a specific backend on IBMQ Backend
             try:
@@ -249,7 +255,7 @@ if __name__ == '__main__':
     # cir.draw(output='mpl')
 
     # --Execute on the quantom simulator--
-    execute_quantum_circuit(cir, shots_simulator)
+    execute_quantum_circuit(cir=cir, shots=shots_simulator, use_ibmq=True)
 
     # --Execute on the quantom computer--
     # quantomcomputer(cir, number_of_qubits, shots_ibmq)
