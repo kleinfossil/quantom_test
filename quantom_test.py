@@ -51,6 +51,22 @@ def quantomcomputer(circ, number_qubits, shots):
     plot_histogram(result.get_counts(circ))
 
 
+def get_quantomcomputer_backend():
+    IBMQ.load_account()
+    provider = IBMQ.get_provider('ibm-q')
+
+    # Selects the lest busy backend which has enough number_of_qubits and is not a simulator and is operational
+    # backend = least_busy(provider.backends(filters=lambda x: x.configuration().n_qubits >= (number_qubits + 1) and not x.configuration().simulator and x.status().operational == True))
+    # print("least busy backend ", backend)
+
+    # simple way to get a specific backend
+    backend = provider.get_backend('ibmq_16_melbourne')
+
+    print("The following Backend has be selected: ", backend)
+
+    return backend
+
+
 def quantomcircuit():
     qr = QuantumRegister(2)
     cr = ClassicalRegister(2)
@@ -173,8 +189,14 @@ def dinner_party_using_grover():
     log_expr = '((D & A) | (C & B)) & ~(A & B)'
 
     dinner_calculator = Grover(LogicalExpressionOracle(log_expr))
-    dinner_result = dinner_calculator.run(Aer.get_backend('qasm_simulator'))
 
+    # Execute on Simulator
+    dinner_result = dinner_calculator.run(Aer.get_backend('qasm_simulator'))
+    # Execute on Quantom Computer
+    dinner_result = dinner_calculator.run(get_quantomcomputer_backend())
+    print(job_monitor(dinner_result))
+
+    # Plot the final Histrogram
     plot_histogram(dinner_result['measurement'], title="Possible Party Combinations")
 
 
