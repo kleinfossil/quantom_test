@@ -72,7 +72,7 @@ def get_quantomcomputer_quantum_instance(shots=100, number_qubits=0, use_quantum
         else:
             # choose the simulator backend
             simulator = Aer.get_backend('qasm_simulator')
-            simulator_instance = QuantumInstance(simulator)
+            simulator_instance = QuantumInstance(simulator, shots)
             print("The following simulator was selected: " + str(simulator_instance.backend_name))
             return simulator_instance
 
@@ -213,7 +213,7 @@ def dinner_party_using_grover():
     # dinner_result = dinner_calculator.run(Aer.get_backend('qasm_simulator'))
     # Execute on Quantom Computer
     # Max 4 qubits can be used right now (+1 scratch qubit, so in total 5)
-    trys = 100
+    trys = 1024
 
     # Executes on Simulator if no qubit number is provided
     quantum_instance = get_quantomcomputer_quantum_instance(trys)
