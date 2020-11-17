@@ -150,14 +150,27 @@ def dinner_party_using_grover():
     # in the later plot results are organized alphabetically
     # starting with the least significant bit (...1 = A; ..1. = B; .1.. = C; 1... = D; and so on)
     # Example: 0110 shows the probability B and C would be a possible combination
-    log_expr = '((D & A) | (C & B)) & ~(A & B)'
-
-    # Logical Table
+    # Example Table for a simple expression: log_expr = '((D & A) | (C & B)) & ~(A & B)'
     # D | C | B | A | Result
     # - - - - - - - - - - - -
+    # 0 | 0 | 0 | 0 | 0
     # 1 | 0 | 0 | 0 | 0
-    #
+    # 0 | 1 | 0 | 0 | 0
+    # 1 | 1 | 0 | 0 | 0
+    # 0 | 0 | 1 | 0 | 0
+    # 1 | 0 | 1 | 0 | 0
+    # 0 | 1 | 1 | 0 | 1
+    # 1 | 1 | 1 | 0 | 1
+    # 0 | 0 | 0 | 1 | 0
+    # 1 | 0 | 0 | 1 | 1
+    # 0 | 1 | 0 | 1 | 0
+    # 1 | 1 | 0 | 1 | 1
+    # 0 | 0 | 1 | 1 | 0
+    # 1 | 0 | 1 | 1 | 0
+    # 0 | 1 | 1 | 1 | 0
+    # 1 | 1 | 1 | 1 | 0
 
+    log_expr = '((D & A) | (C & B)) & ~(A & B)'
 
     dinner_calculator = Grover(LogicalExpressionOracle(log_expr))
     dinner_result = dinner_calculator.run(Aer.get_backend('qasm_simulator'))
