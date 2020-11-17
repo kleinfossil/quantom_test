@@ -3,7 +3,7 @@ from qiskit.tools.visualization import plot_histogram
 from qiskit.tools.monitor import job_monitor
 import matplotlib.pyplot as plt
 import numpy as np
-import pylatexenc
+# import pylatexenc
 from qiskit.quantum_info import Operator
 from qiskit import QuantumCircuit
 from qiskit import IBMQ
@@ -54,13 +54,13 @@ def quantomcomputer(circ, number_qubits, shots):
 def quantomcircuit():
     qr = QuantumRegister(2)
     cr = ClassicalRegister(2)
-    circuit = QuantumCircuit(qr, cr)
-    circuit.h(qr[0])
-    circuit.cx(qr[0], qr[1])
-    circuit.measure(qr, cr)
+    simple_circuit = QuantumCircuit(qr, cr)
+    simple_circuit.h(qr[0])
+    simple_circuit.cx(qr[0], qr[1])
+    simple_circuit.measure(qr, cr)
 
-    circuit.draw(output='mpl')
-    return circuit
+    simple_circuit.draw(output='mpl')
+    return simple_circuit
 
 
 def phase_oracle(n, indices_to_mark, name='Oracle'):
@@ -77,7 +77,6 @@ def phase_oracle(n, indices_to_mark, name='Oracle'):
     qc.unitary(Operator(oracle_matrix), range(n))
 
     return qc
-
 
 
 def diffuser(n):
@@ -120,43 +119,75 @@ def grover(n, indices_of_marked_elements):
     return qc
 
 
+def grover_prep(qubit_number):
+    # --Execute Grover algorithm to find marked elements in an unsorted list--
+
+    # Select number of qubits
+
+    # Create "marked elements". These elements will be the elements the algorithm should look for.
+    # In this case the the elements will be chosen randomly based on the number of qubits
+    # (number ob qubits in binary means 2^n)
+    x = np.random.randint(2 ** qubit_number)
+    y = np.random.randint(2 ** qubit_number)
+
+    # this makes sure that the y elements is not equal to x
+    while y == x:
+        y = np.random.randint(2 ** qubit_number)
+
+    marked = [x, y]
+
+    # Excecutes the grover algorithm and provides back the probabilities than an element was marked
+    grover_cir = grover(qubit_number, marked)
+    return grover_cir
+
+
+def dinner_party_using_grover():
+    from qiskit.aqua.algorithms import Grover
+    from qiskit.aqua.components.oracles import LogicalExpressionOracle
+    from qiskit.tools.visualization import plot_histogram
+
+    # & = and; | = or; ~ = not; ^ = xor
+    # in the later plot results are organized alphabetically
+    # starting with the least significant bit (...1 = A; ..1. = B; .1.. = C; 1... = D; and so on)
+    # Example: 0110 shows the probability B and C would be a possible combination
+    log_expr = '((D & A) | (C & B)) & ~(A & B)'
+
+    # Logical Table
+    # D | C | B | A | Result
+    # - - - - - - - - - - - -
+    # 1 | 0 | 0 | 0 | 0
+    #
+
+
+    dinner_calculator = Grover(LogicalExpressionOracle(log_expr))
+    dinner_result = dinner_calculator.run(Aer.get_backend('qasm_simulator'))
+
+    plot_histogram(dinner_result['measurement'], title="Possible Party Combinations")
+
+
 if __name__ == '__main__':
     # --Print qiskit version--
     # qiskitversion()
 
     # --Prepatation Step--
-    shots_simulator = 1024
-    shots_ibmq = 1024
+    # shots_simulator = 1024
+    # shots_ibmq = 1024
 
     # --create a simple quantum circuit--
     # cir = quantomcircuit()
 
-    # --Execute Grover algorithm to find marked elements in an unsorted list--
+    # number_of_qubits = 3
+    # cir = grover_prep(number_of_qubits)
 
-    # Select number of qubits
-    number_of_qubits = 3
-
-    # Create "marked elements". These elements will be the elements the algorithm should look for.
-    # In this case the the elements will be chosen randomly based on the number of qubits
-    # (number ob qubits in binary means 2^n)
-    x = np.random.randint(2**number_of_qubits)
-    y = np.random.randint(2**number_of_qubits)
-
-    # this makes sure that the y elements is not equal to x
-    while y == x:
-        y = np.random.randint(2**number_of_qubits)
-
-    marked = [x,y]
-
-    # Excecutes the grover algorithm and provides back the probabilities than an element was marked
-    cir = grover(number_of_qubits, marked)
-    cir.draw(output='mpl')
+    # cir.draw(output='mpl')
 
     # --Execute on the quantom simulator--
-    quantomsimulator(cir, shots_simulator)
+    # quantomsimulator(cir, shots_simulator)
 
     # --Execute on the quantom computer--
-    quantomcomputer(cir, number_of_qubits, shots_ibmq)
+    # quantomcomputer(cir, number_of_qubits, shots_ibmq)
+
+    dinner_party_using_grover()
 
     plt.show()
 
