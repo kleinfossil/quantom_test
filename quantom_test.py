@@ -16,6 +16,7 @@ def qiskitversion():
     print('Current qiskit Version: ', qiskit.__qiskit_version__)
     print('Current IBM Account: ', IBMQ.load_account())
 
+
 # Executes the QASM Simulator
 def quantomsimulator(cir, shots):
     # choose the simulator backend
@@ -49,32 +50,47 @@ def quantomcomputer(circ, number_qubits, shots):
     plot_histogram(result.get_counts(circ))
 
 
-# Selects a IBMQ quantum instance if number of qubits is lower than 5
-def get_quantomcomputer_quantum_instance(shots=100, number_qubits=0, use_quantum_computer=False):
-    if 0 < number_qubits < 5 and use_quantum_computer:
+# Selects a quantom computer instance. This can be ibmq or a local simulator
+def get_quantumcomputer_quantum_instance(shots=100, number_qubits=0, use_ibmq=False, specific_ibmq_backend="none"):
+    if use_ibmq:
         IBMQ.load_account()
         provider = IBMQ.get_provider('ibm-q')
+        if specific_ibmq_backend == 'none':
+            if 0 < number_qubits < 5:
+                # Selects the lest busy backend which has enough number_of_qubits and is not a simulator and is operational
+                backend = least_busy(provider.backends(filters=lambda x: x.configuration().n_qubits >= (number_qubits + 1) and not x.configuration().simulator and x.status().operational == True))
+                print("The least busy backend ", backend)
+                print("The following Backend has be selected: ", backend)
+                quantum_instance = QuantumInstance(backend, shots, skip_qobj_validation=False)
+                return quantum_instance
 
-        # Selects the lest busy backend which has enough number_of_qubits and is not a simulator and is operational
-        backend = least_busy(provider.backends(filters=lambda x: x.configuration().n_qubits >= (number_qubits + 1) and not x.configuration().simulator and x.status().operational == True))
-        print("least busy backend ", backend)
+            else:
+                if 5 <= number_qubits < 32:
+                    # selects the IBMQ simulator
+                    backend = provider.get_backend('ibmq_qasm_simulator')
+                    print("The following Backend has be selected: ", backend)
+                    quantum_instance = QuantumInstance(backend, shots, skip_qobj_validation=False)
+                    return quantum_instance
+                else:
+                    raise Exception('Sorry your number of qubits reached. The max number for IBMQ is 31. Your requested: ' + str(number_qubits))
 
-        # simple way to get a specific backend
-        # backend = provider.get_backend('ibmq_16_melbourne')
-        print("The following Backend has be selected: ", backend)
-
-        quantum_instance = QuantumInstance(backend, shots, skip_qobj_validation=False)
-
-        return quantum_instance
-    else:
-        if use_quantum_computer:
-            raise Exception('Sorry your number of qubits reached. The max number is 4. Your requested: ' + str(number_qubits))
         else:
-            # choose the simulator backend
-            simulator = Aer.get_backend('qasm_simulator')
-            simulator_instance = QuantumInstance(simulator, shots)
-            print("The following simulator was selected: " + str(simulator_instance.backend_name))
-            return simulator_instance
+            # Selects a specific backend on IBMQ Backend
+            try:
+                backend = provider.get_backend(specific_ibmq_backend)
+            except Exception as e:
+                print("Stacktrace: " + str(e))
+                print("The backend could not be selected. Please check again the backend name you have given: " + specific_ibmq_backend)
+            print("The following Backend has be selected: ", backend)
+            quantum_instance = QuantumInstance(backend, shots, skip_qobj_validation=False)
+            return quantum_instance
+
+    else:
+        # Choose a local Simulator
+        simulator = Aer.get_backend('qasm_simulator')
+        simulator_instance = QuantumInstance(simulator, shots)
+        print("The following simulator was selected: " + str(simulator_instance.backend_name))
+        return simulator_instance
 
 
 def quantomcircuit():
@@ -216,12 +232,12 @@ def dinner_party_using_grover():
     trys = 1024
 
     # Executes on Simulator if no qubit number is provided
-    quantum_instance = get_quantomcomputer_quantum_instance(trys)
+    quantum_instance = get_quantumcomputer_quantum_instance(trys)
 
     dinner_result = dinner_calculator.run(quantum_instance)
 
-    if quantum_instance.is_simulator:
-        print("As simulator was selected, no job monitor will be shown.")
+    if quantum_instance.backend_name == "qasm_simulator":
+        print("As a local simulator was selected, no job monitor will be shown.")
     else:
         print("Running on IBMQ")
         print(job_monitor(dinner_result))
