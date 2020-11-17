@@ -59,7 +59,7 @@ def get_quantumcomputer_quantum_instance(shots=100, number_qubits=None, use_ibmq
             if 0 < number_qubits < 5:
                 # Selects the lest busy backend which has enough number_of_qubits and is not a simulator and is operational
                 backend = least_busy(provider.backends(filters=lambda x: x.configuration().n_qubits >= (number_qubits + 1) and not x.configuration().simulator and x.status().operational == True))
-                print("The least busy backend ", backend)
+                print("The least busy backend ", str(backend))
                 print("The following Backend has be selected: ", backend)
                 quantum_instance = QuantumInstance(backend, shots, skip_qobj_validation=False)
                 return quantum_instance
@@ -68,7 +68,7 @@ def get_quantumcomputer_quantum_instance(shots=100, number_qubits=None, use_ibmq
                 if 5 <= number_qubits < 32:
                     # selects the IBMQ simulator
                     backend = provider.get_backend('ibmq_qasm_simulator')
-                    print("The following Backend has be selected: ", backend)
+                    print("The following Backend has be selected: ", str(backend))
                     quantum_instance = QuantumInstance(backend, shots, skip_qobj_validation=False)
                     return quantum_instance
                 else:
@@ -81,7 +81,7 @@ def get_quantumcomputer_quantum_instance(shots=100, number_qubits=None, use_ibmq
             except Exception as e:
                 print("Stacktrace: " + str(e))
                 print("The backend could not be selected. Please check again the backend name you have given: " + specific_ibmq_backend)
-            print("The following Backend has be selected: ", backend)
+            print("The following Backend has be selected: ", str(backend))
             quantum_instance = QuantumInstance(backend, shots, skip_qobj_validation=False)
             return quantum_instance
 
@@ -228,8 +228,8 @@ def dinner_party_using_grover():
     # Execute the dinner_calculator
     # Max 4 qubits can be used on a Quantum Computer right now (+1 scratch qubit, so in total 5)
     trys = 1024
-    qubits = None
-    ibmq = False
+    qubits = 11
+    ibmq = True
     required_backend = None
 
     print("Execute the following command:")
@@ -238,7 +238,7 @@ def dinner_party_using_grover():
     print(" IBMQ Backend Required: " + str(ibmq))
     print(" Specific IBMQ Backend Required: " + str(required_backend))
 
-    quantum_instance = get_quantumcomputer_quantum_instance(trys)
+    quantum_instance = get_quantumcomputer_quantum_instance(trys, qubits, ibmq, required_backend)
 
     dinner_result = dinner_calculator.run(quantum_instance)
 
