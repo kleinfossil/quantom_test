@@ -51,7 +51,7 @@ def quantomcomputer(circ, number_qubits, shots):
 
 
 # Selects a quantom computer instance. This can be ibmq or a local simulator
-def get_quantumcomputer_quantum_instance(shots=100, number_qubits=0, use_ibmq=False, specific_ibmq_backend="none"):
+def get_quantumcomputer_quantum_instance(shots=100, number_qubits=None, use_ibmq=False, specific_ibmq_backend=None):
     if use_ibmq:
         IBMQ.load_account()
         provider = IBMQ.get_provider('ibm-q')
@@ -225,13 +225,19 @@ def dinner_party_using_grover():
 
     dinner_calculator = Grover(LogicalExpressionOracle(log_expr))
 
-    # Execute on Simulator
-    # dinner_result = dinner_calculator.run(Aer.get_backend('qasm_simulator'))
-    # Execute on Quantom Computer
-    # Max 4 qubits can be used right now (+1 scratch qubit, so in total 5)
+    # Execute the dinner_calculator
+    # Max 4 qubits can be used on a Quantum Computer right now (+1 scratch qubit, so in total 5)
     trys = 1024
+    qubits = None
+    ibmq = False
+    required_backend = None
 
-    # Executes on Simulator if no qubit number is provided
+    print("Execute the following command:")
+    print(" Number of trys: " + str(trys))
+    print(" Number of qubits: " + str(qubits))
+    print(" IBMQ Backend Required: " + str(ibmq))
+    print(" Specific IBMQ Backend Required: " + str(required_backend))
+
     quantum_instance = get_quantumcomputer_quantum_instance(trys)
 
     dinner_result = dinner_calculator.run(quantum_instance)
