@@ -17,37 +17,17 @@ def qiskitversion():
     print('Current IBM Account: ', IBMQ.load_account())
 
 
-# Executes the QASM Simulator
-def quantomsimulator(cir, shots):
-    # choose the simulator backend
-    simulator = Aer.get_backend('qasm_simulator')
+# Executes a specific quantum Circut
+def execute_quantum_circuit(cir, shots=100, number_qubits=None, use_ibmq=False, specific_ibmq_backend=None):
 
-    result = execute(cir, backend=simulator, shots=shots).result()
+    # Select a specific quantum circuit
+    quantum_instance = get_quantumcomputer_quantum_instance(shots, number_qubits, use_ibmq, specific_ibmq_backend)
+
+    # Execute quantum circut
+    result = quantum_instance.execute(cir)
     plot_histogram(result.get_counts(cir))
-    return simulator
 
-
-# Executes a real Quantom Computer
-def quantomcomputer(circ, number_qubits, shots):
-    IBMQ.load_account()
-    provider = IBMQ.get_provider('ibm-q')
-
-    # Selects the lest busy backend which has enough number_of_qubits and is not a simulator and is operational
-    backend = least_busy(provider.backends(filters=lambda x: x.configuration().n_qubits >= (number_qubits+1) and not x.configuration().simulator and x.status().operational == True))
-
-    print("least busy backend ", backend)
-
-    # simple way to get a specific backend
-    backend = provider.get_backend('ibmq_16_melbourne')
-
-    print("Will execute circuit on backend: ", backend)
-
-    # Executes the job on the selected backedn
-    job = execute(circ, backend=backend, shots=shots, optimization_level=3)
-
-    print(job_monitor(job))
-    result = job.result()
-    plot_histogram(result.get_counts(circ))
+    return quantum_instance.backend_name
 
 
 # Selects a quantom computer instance. This can be ibmq or a local simulator
@@ -93,7 +73,7 @@ def get_quantumcomputer_quantum_instance(shots=100, number_qubits=None, use_ibmq
         return simulator_instance
 
 
-def quantomcircuit():
+def get_simple_example_quantum_circuit():
     qr = QuantumRegister(2)
     cr = ClassicalRegister(2)
     simple_circuit = QuantumCircuit(qr, cr)
@@ -257,11 +237,11 @@ if __name__ == '__main__':
     # qiskitversion()
 
     # --Prepatation Step--
-    # shots_simulator = 1024
+    shots_simulator = 1024
     # shots_ibmq = 1024
 
     # --create a simple quantum circuit--
-    # cir = quantomcircuit()
+    cir = get_simple_example_quantum_circuit()
 
     # number_of_qubits = 3
     # cir = grover_prep(number_of_qubits)
@@ -269,12 +249,12 @@ if __name__ == '__main__':
     # cir.draw(output='mpl')
 
     # --Execute on the quantom simulator--
-    # quantomsimulator(cir, shots_simulator)
+    execute_quantum_circuit(cir, shots_simulator)
 
     # --Execute on the quantom computer--
     # quantomcomputer(cir, number_of_qubits, shots_ibmq)
 
-    dinner_party_using_grover()
+    # dinner_party_using_grover()
 
     plt.show()
 
